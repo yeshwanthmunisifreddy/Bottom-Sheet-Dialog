@@ -1,32 +1,31 @@
-package technology.nine.cred.utills.customfonts.TextView;
+package technology.nine.cred.utills.customfonts.TextView
 
-import android.content.Context;
-import android.graphics.Typeface;
-import android.util.AttributeSet;
+import android.content.Context
+import android.graphics.Typeface
+import android.util.AttributeSet
+import androidx.appcompat.widget.AppCompatTextView
 
-import androidx.appcompat.widget.AppCompatTextView;
-
-public class KumbhSansRegularTextView extends AppCompatTextView {
-
-    public KumbhSansRegularTextView(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-        init();
+class KumbhSansRegularTextView : AppCompatTextView {
+    constructor(context: Context?, attrs: AttributeSet?, defStyle: Int) : super(
+        context!!, attrs, defStyle
+    ) {
+        init()
     }
 
-    public KumbhSansRegularTextView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init();
+    constructor(context: Context?, attrs: AttributeSet?) : super(
+        context!!, attrs
+    ) {
+        init()
     }
 
-    public KumbhSansRegularTextView(Context context) {
-        super(context);
-        init();
+    constructor(context: Context?) : super(context!!) {
+        init()
     }
 
-    private void init() {
-        if (!isInEditMode()) {
-            Typeface tf = Typeface.createFromAsset(getContext().getAssets(), "KumbhSans-Regular.ttf");
-            setTypeface(tf);
+    private fun init() {
+        if (!isInEditMode) {
+            val tf = Typeface.createFromAsset(context.assets, "KumbhSans-Regular.ttf")
+            typeface = tf
         }
     }
 }

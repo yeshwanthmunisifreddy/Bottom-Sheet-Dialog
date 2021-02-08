@@ -51,8 +51,8 @@ class MainActivity : AppCompatActivity(), StateChangeListener {
         secondBottomSheetBehaviour =
             BottomSheetBehavior.from(secondBottomSheet) as CustomBottomSheetBehavior<*>
 
-        firstBottomSheet.layoutParams.height = height - 400
-        secondBottomSheet.layoutParams.height = height - 650
+        firstBottomSheet.layoutParams.height = height - 550
+        secondBottomSheet.layoutParams.height = height - 800
         bt_proceed.setOnClickListener {
             if (firstBottomSheetBehavior?.state == BottomSheetBehavior.STATE_COLLAPSED) {
                 firstBottomSheetBehavior!!.state = BottomSheetBehavior.STATE_EXPANDED;

@@ -1,311 +1,268 @@
-package technology.nine.cred.utills;
+package technology.nine.cred.utills
 
-import android.content.Context;
-import android.content.res.TypedArray;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.RectF;
-import android.graphics.drawable.Drawable;
-import android.util.AttributeSet;
-import android.view.MotionEvent;
-import android.view.View;
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.RectF
+import android.graphics.drawable.Drawable
+import android.util.AttributeSet
+import android.view.MotionEvent
+import android.view.View
+import androidx.core.content.ContextCompat
+import technology.nine.cred.R
 
-import androidx.core.content.ContextCompat;
-
-import technology.nine.cred.R;
-
-public class SeekBar extends View {
-    public static int INVALID_VALUE = -1;
-    public static final int MAX = 100;
-    public static final int MIN = 0;
-
-    /**
-     * Offset = -90 indicates that the progress starts from 12 o'clock.
-     */
-    private static final int ANGLE_OFFSET = -90;
-
+class SeekBar : View {
     /**
      * The current points value.
      */
-    private int mPoints = MIN;
+    private var mPoints = MIN
 
     /**
      * The min value of progress value.
      */
-    private int mMin = MIN;
+    private var mMin = MIN
 
     /**
      * The Maximum value that this SeekArc can be set to
      */
-    private int mMax = MAX;
+    private var mMax = MAX
 
     /**
      * The increment/decrement value for each movement of progress.
      */
-    private int mStep = 10;
+    var step = 10
 
     /**
      * The Drawable for the seek arc thumbnail
      */
-    private Drawable mIndicatorIcon;
-
-
-    private int mProgressWidth = 12;
-    private int mArcWidth = 12;
-    private boolean mClockwise = true;
-    private boolean mEnabled = true;
-
+    private var mIndicatorIcon: Drawable? = null
+    private var mProgressWidth = 12
+    private var mArcWidth = 12
+    var isClockwise = true
+    private var mEnabled = true
     //
     // internal variables
     //
     /**
      * The counts of point update to determine whether to change previous progress.
      */
-    private int mUpdateTimes = 0;
-    private float mPreviousProgress = -1;
-    private float mCurrentProgress = 0;
+    private var mUpdateTimes = 0
+    private var mPreviousProgress = -1f
+    private var mCurrentProgress = 0f
 
     /**
      * Determine whether reach max of point.
      */
-    private boolean isMax = false;
+    private var isMax = false
 
     /**
      * Determine whether reach min of point.
      */
-    private boolean isMin = false;
-
-    private int mArcRadius = 0;
-    private RectF mArcRect = new RectF();
-    private Paint mArcPaint;
-
-    private float mProgressSweep = 0;
-    private Paint mProgressPaint;
-
-    private int mTranslateX;
-    private int mTranslateY;
+    private var isMin = false
+    private var mArcRadius = 0
+    private val mArcRect = RectF()
+    private var mArcPaint: Paint? = null
+    private var mProgressSweep = 0f
+    private var mProgressPaint: Paint? = null
+    private var mTranslateX = 0
+    private var mTranslateY = 0
 
     // the (x, y) coordinator of indicator icon
-    private int mIndicatorIconX;
-    private int mIndicatorIconY;
+    private var mIndicatorIconX = 0
+    private var mIndicatorIconY = 0
 
     /**
      * The current touch angle of arc.
      */
-    private double mTouchAngle;
-    private OnSeekBarAttrChangeListener mOnSeekBarAttrChangeListener;
+    private var mTouchAngle = 0.0
+    private var mOnSeekBarAttrChangeListener: OnSeekBarAttrChangeListener? = null
 
-    public SeekBar(Context context) {
-        super(context);
-        init(context, null);
+    constructor(context: Context) : super(context) {
+        init(context, null)
     }
 
-    public SeekBar(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        init(context, attrs)
     }
 
-    private void init(Context context, AttributeSet attrs) {
-
-        float density = getResources().getDisplayMetrics().density;
+    private fun init(context: Context, attrs: AttributeSet?) {
+        val density = resources.displayMetrics.density
 
         // Defaults, may need to link this into theme settings
-        int arcColor = ContextCompat.getColor(context, R.color.pink_200);
-        int progressColor = ContextCompat.getColor(context, R.color.pink_500);
-        mProgressWidth = (int) (mProgressWidth * density);
-        mArcWidth = (int) (mArcWidth * density);
-
-        mIndicatorIcon = ContextCompat.getDrawable(context, R.drawable.ic_circle_diagonal_line);
-
+        var arcColor = ContextCompat.getColor(context, R.color.pink_200)
+        var progressColor = ContextCompat.getColor(context, R.color.pink_500)
+        mProgressWidth = (mProgressWidth * density).toInt()
+        mArcWidth = (mArcWidth * density).toInt()
+        mIndicatorIcon = ContextCompat.getDrawable(context, R.drawable.ic_circle_diagonal_line)
         if (attrs != null) {
             // Attribute initialization
-            final TypedArray a = context.obtainStyledAttributes(attrs,
-                    R.styleable.SeekBarAttr, 0, 0);
-
-            Drawable indicatorIcon = a.getDrawable(R.styleable.SeekBarAttr_indicatorIcon);
-            if (indicatorIcon != null)
-                mIndicatorIcon = indicatorIcon;
-
-            int indicatorIconHalfWidth = mIndicatorIcon.getIntrinsicWidth() / 2;
-            int indicatorIconHalfHeight = mIndicatorIcon.getIntrinsicHeight() / 2;
-            mIndicatorIcon.setBounds(-indicatorIconHalfWidth, -indicatorIconHalfHeight, indicatorIconHalfWidth,
-                    indicatorIconHalfHeight);
-
-            mPoints = a.getInteger(R.styleable.SeekBarAttr_points, mPoints);
-            mMin = a.getInteger(R.styleable.SeekBarAttr_min, mMin);
-            mMax = a.getInteger(R.styleable.SeekBarAttr_max, mMax);
-            mStep = a.getInteger(R.styleable.SeekBarAttr_step, mStep);
-
-            mProgressWidth = (int) a.getDimension(R.styleable.SeekBarAttr_progressWidth, mProgressWidth);
-            progressColor = a.getColor(R.styleable.SeekBarAttr_progressColor, progressColor);
-
-            mArcWidth = (int) a.getDimension(R.styleable.SeekBarAttr_arcWidth, mArcWidth);
-            arcColor = a.getColor(R.styleable.SeekBarAttr_arcColor, arcColor);
-
-
-            mClockwise = a.getBoolean(R.styleable.SeekBarAttr_clockwise,
-                    mClockwise);
-            mEnabled = a.getBoolean(R.styleable.SeekBarAttr_enabled, mEnabled);
-            a.recycle();
+            val a = context.obtainStyledAttributes(
+                attrs,
+                R.styleable.SeekBarAttr, 0, 0
+            )
+            val indicatorIcon = a.getDrawable(R.styleable.SeekBarAttr_indicatorIcon)
+            if (indicatorIcon != null) mIndicatorIcon = indicatorIcon
+            val indicatorIconHalfWidth = mIndicatorIcon!!.intrinsicWidth / 2
+            val indicatorIconHalfHeight = mIndicatorIcon!!.intrinsicHeight / 2
+            mIndicatorIcon!!.setBounds(
+                -indicatorIconHalfWidth, -indicatorIconHalfHeight, indicatorIconHalfWidth,
+                indicatorIconHalfHeight
+            )
+            mPoints = a.getInteger(R.styleable.SeekBarAttr_points, mPoints)
+            mMin = a.getInteger(R.styleable.SeekBarAttr_min, mMin)
+            mMax = a.getInteger(R.styleable.SeekBarAttr_max, mMax)
+            step = a.getInteger(R.styleable.SeekBarAttr_step, step)
+            mProgressWidth =
+                a.getDimension(R.styleable.SeekBarAttr_progressWidth, mProgressWidth.toFloat())
+                    .toInt()
+            progressColor = a.getColor(R.styleable.SeekBarAttr_progressColor, progressColor)
+            mArcWidth =
+                a.getDimension(R.styleable.SeekBarAttr_arcWidth, mArcWidth.toFloat()).toInt()
+            arcColor = a.getColor(R.styleable.SeekBarAttr_arcColor, arcColor)
+            isClockwise = a.getBoolean(
+                R.styleable.SeekBarAttr_clockwise,
+                isClockwise
+            )
+            mEnabled = a.getBoolean(R.styleable.SeekBarAttr_enabled, mEnabled)
+            a.recycle()
         }
 
         // range check
-        mPoints = (mPoints > mMax) ? mMax : mPoints;
-        mPoints = (mPoints < mMin) ? mMin : mPoints;
-
-        mProgressSweep = (float) mPoints / valuePerDegree();
-
-        mArcPaint = new Paint();
-        mArcPaint.setColor(arcColor);
-        mArcPaint.setAntiAlias(true);
-        mArcPaint.setStyle(Paint.Style.STROKE);
-        mArcPaint.setStrokeWidth(mArcWidth);
-
-        mProgressPaint = new Paint();
-        mProgressPaint.setColor(progressColor);
-        mProgressPaint.setAntiAlias(true);
-        mProgressPaint.setStyle(Paint.Style.STROKE);
-        mProgressPaint.setStrokeWidth(mProgressWidth);
+        mPoints = if (mPoints > mMax) mMax else mPoints
+        mPoints = if (mPoints < mMin) mMin else mPoints
+        mProgressSweep = mPoints.toFloat() / valuePerDegree()
+        mArcPaint = Paint()
+        mArcPaint!!.color = arcColor
+        mArcPaint!!.isAntiAlias = true
+        mArcPaint!!.style = Paint.Style.STROKE
+        mArcPaint!!.strokeWidth = mArcWidth.toFloat()
+        mProgressPaint = Paint()
+        mProgressPaint!!.color = progressColor
+        mProgressPaint!!.isAntiAlias = true
+        mProgressPaint!!.style = Paint.Style.STROKE
+        mProgressPaint!!.strokeWidth = mProgressWidth.toFloat()
     }
 
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-
-        final int width = getDefaultSize(getSuggestedMinimumWidth(), widthMeasureSpec);
-        final int height = getDefaultSize(getSuggestedMinimumHeight(), heightMeasureSpec);
-        final int min = Math.min(width, height);
-
-        mTranslateX = (int) (width * 0.5f);
-        mTranslateY = (int) (height * 0.5f);
-
-        int arcDiameter = min - getPaddingLeft();
-        mArcRadius = arcDiameter / 2;
-        float top = height / 2 - (arcDiameter / 2);
-        float left = width / 2 - (arcDiameter / 2);
-        mArcRect.set(left, top, left + arcDiameter, top + arcDiameter);
-
-        updateIndicatorIconPosition();
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val width = getDefaultSize(suggestedMinimumWidth, widthMeasureSpec)
+        val height = getDefaultSize(suggestedMinimumHeight, heightMeasureSpec)
+        val min = Math.min(width, height)
+        mTranslateX = (width * 0.5f).toInt()
+        mTranslateY = (height * 0.5f).toInt()
+        val arcDiameter = min - paddingLeft
+        mArcRadius = arcDiameter / 2
+        val top = (height / 2 - arcDiameter / 2).toFloat()
+        val left = (width / 2 - arcDiameter / 2).toFloat()
+        mArcRect[left, top, left + arcDiameter] = top + arcDiameter
+        updateIndicatorIconPosition()
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     }
 
-    @Override
-    protected void onDraw(Canvas canvas) {
-        if (!mClockwise) {
-            canvas.scale(-1, 1, mArcRect.centerX(), mArcRect.centerY());
+    override fun onDraw(canvas: Canvas) {
+        if (!isClockwise) {
+            canvas.scale(-1f, 1f, mArcRect.centerX(), mArcRect.centerY())
         }
 
         // draw the arc and progress
-        canvas.drawArc(mArcRect, ANGLE_OFFSET, 360, false, mArcPaint);
-        canvas.drawArc(mArcRect, ANGLE_OFFSET, mProgressSweep, false, mProgressPaint);
-
+        canvas.drawArc(mArcRect, ANGLE_OFFSET.toFloat(), 360f, false, mArcPaint!!)
+        canvas.drawArc(mArcRect, ANGLE_OFFSET.toFloat(), mProgressSweep, false, mProgressPaint!!)
         if (mEnabled) {
             // draw the indicator icon
-            canvas.translate(mTranslateX - mIndicatorIconX, mTranslateY - mIndicatorIconY);
-            mIndicatorIcon.draw(canvas);
+            canvas.translate(
+                (mTranslateX - mIndicatorIconX).toFloat(),
+                (mTranslateY - mIndicatorIconY).toFloat()
+            )
+            mIndicatorIcon!!.draw(canvas)
         }
     }
 
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
+    override fun onTouchEvent(event: MotionEvent): Boolean {
         if (mEnabled) {
-            this.getParent().requestDisallowInterceptTouchEvent(true);
-
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    if (mOnSeekBarAttrChangeListener != null)
-                        mOnSeekBarAttrChangeListener.onStartTrackingTouch(this);
-//					updateOnTouch(event);
-                    break;
-                case MotionEvent.ACTION_MOVE:
-                    updateOnTouch(event);
-                    break;
-                case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_CANCEL:
-                    if (mOnSeekBarAttrChangeListener != null)
-                        mOnSeekBarAttrChangeListener.onStopTrackingTouch(this);
-                    setPressed(false);
-                    this.getParent().requestDisallowInterceptTouchEvent(false);
-                    break;
+            this.parent.requestDisallowInterceptTouchEvent(true)
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> if (mOnSeekBarAttrChangeListener != null) mOnSeekBarAttrChangeListener!!.onStartTrackingTouch(
+                    this
+                )
+                MotionEvent.ACTION_MOVE -> updateOnTouch(event)
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    if (mOnSeekBarAttrChangeListener != null) mOnSeekBarAttrChangeListener!!.onStopTrackingTouch(
+                        this
+                    )
+                    isPressed = false
+                    this.parent.requestDisallowInterceptTouchEvent(false)
+                }
             }
-            return true;
+            return true
         }
-        return false;
+        return false
     }
 
-    @Override
-    protected void drawableStateChanged() {
-        super.drawableStateChanged();
-        if (mIndicatorIcon != null && mIndicatorIcon.isStateful()) {
-            int[] state = getDrawableState();
-            mIndicatorIcon.setState(state);
+    override fun drawableStateChanged() {
+        super.drawableStateChanged()
+        if (mIndicatorIcon != null && mIndicatorIcon!!.isStateful) {
+            val state = drawableState
+            mIndicatorIcon!!.state = state
         }
-        invalidate();
+        invalidate()
+    }
+    private fun updateOnTouch(event: MotionEvent) {
+        isPressed = true
+        mTouchAngle = convertTouchEventPointToAngle(event.x, event.y)
+        val progress = convertAngleToProgress(mTouchAngle)
+        updateProgress(progress, true)
     }
 
-    /**
-     * Update all the UI components on touch events.
-     *
-     * @param event MotionEvent
-     */
-    private void updateOnTouch(MotionEvent event) {
-        setPressed(true);
-        mTouchAngle = convertTouchEventPointToAngle(event.getX(), event.getY());
-        int progress = convertAngleToProgress(mTouchAngle);
-        updateProgress(progress, true);
-    }
-
-    private double convertTouchEventPointToAngle(float xPos, float yPos) {
+    private fun convertTouchEventPointToAngle(xPos: Float, yPos: Float): Double {
         // transform touch coordinate into component coordinate
-        float x = xPos - mTranslateX;
-        float y = yPos - mTranslateY;
-
-        x = (mClockwise) ? x : -x;
-        double angle = Math.toDegrees(Math.atan2(y, x) + (Math.PI / 2));
-        angle = (angle < 0) ? (angle + 360) : angle;
-//		System.out.printf("(%f, %f) %f\n", x, y, angle);
-        return angle;
+        var x = xPos - mTranslateX
+        val y = yPos - mTranslateY
+        x = if (isClockwise) x else -x
+        var angle = Math.toDegrees(Math.atan2(y.toDouble(), x.toDouble()) + Math.PI / 2)
+        angle = if (angle < 0) angle + 360 else angle
+        //		System.out.printf("(%f, %f) %f\n", x, y, angle);
+        return angle
     }
 
-    private int convertAngleToProgress(double angle) {
-        return (int) Math.round(valuePerDegree() * angle);
+    private fun convertAngleToProgress(angle: Double): Int {
+        return Math.round(valuePerDegree() * angle).toInt()
     }
 
-    private float valuePerDegree() {
-        return (float) (mMax) / 360.0f;
+    private fun valuePerDegree(): Float {
+        return mMax.toFloat() / 360.0f
     }
 
-    private void updateIndicatorIconPosition() {
-        int thumbAngle = (int) (mProgressSweep + 90);
-        mIndicatorIconX = (int) (mArcRadius * Math.cos(Math.toRadians(thumbAngle)));
-        mIndicatorIconY = (int) (mArcRadius * Math.sin(Math.toRadians(thumbAngle)));
+    private fun updateIndicatorIconPosition() {
+        val thumbAngle = (mProgressSweep + 90).toInt()
+        mIndicatorIconX = (mArcRadius * Math.cos(Math.toRadians(thumbAngle.toDouble()))).toInt()
+        mIndicatorIconY = (mArcRadius * Math.sin(Math.toRadians(thumbAngle.toDouble()))).toInt()
     }
 
-    private void updateProgress(int progress, boolean fromUser) {
+    private fun updateProgress(progress: Int, fromUser: Boolean) {
 
         // detect points change closed to max or min
-        final int maxDetectValue = (int) ((double) mMax * 0.95);
-        final int minDetectValue = (int) ((double) mMax * 0.05) + mMin;
-//		System.out.printf("(%d, %d) / (%d, %d)\n", mMax, mMin, maxDetectValue, minDetectValue);
-
-        mUpdateTimes++;
+        var progress = progress
+        val maxDetectValue = (mMax.toDouble() * 0.95).toInt()
+        val minDetectValue = (mMax.toDouble() * 0.05).toInt() + mMin
+        //		System.out.printf("(%d, %d) / (%d, %d)\n", mMax, mMin, maxDetectValue, minDetectValue);
+        mUpdateTimes++
         if (progress == INVALID_VALUE) {
-            return;
+            return
         }
 
         // avoid accidentally touch to become max from original point
-        if (progress > maxDetectValue && mPreviousProgress == INVALID_VALUE) {
+        if (progress > maxDetectValue && mPreviousProgress == INVALID_VALUE.toFloat()) {
 //			System.out.printf("Skip (%d) %.0f -> %.0f %s\n",
 //					progress, mPreviousProgress, mCurrentProgress, isMax ? "Max" : "");
-            return;
+            return
         }
 
 
         // record previous and current progress change
         if (mUpdateTimes == 1) {
-            mCurrentProgress = progress;
+            mCurrentProgress = progress.toFloat()
         } else {
-            mPreviousProgress = mCurrentProgress;
-            mCurrentProgress = progress;
+            mPreviousProgress = mCurrentProgress
+            mCurrentProgress = progress.toFloat()
         }
 
 //		if (mPreviousProgress != mCurrentProgress)
@@ -314,188 +271,142 @@ public class SeekBar extends View {
 //					mPreviousProgress, mCurrentProgress,
 //					isMax ? "Max" : "",
 //					isMin ? "Min" : "");
+        mPoints = progress - progress % step
 
-        mPoints = progress - (progress % mStep);
-
-        /**
-         * Determine whether reach max or min to lock point update event.
-         *
-         * When reaching max, the progress will drop from max (or maxDetectPoints ~ max
-         * to min (or min ~ minDetectPoints) and vice versa.
-         *
-         * If reach max or min, stop increasing / decreasing to avoid exceeding the max / min.
-         */
         if (mUpdateTimes > 1 && !isMin && !isMax) {
-            if (mPreviousProgress >= maxDetectValue && mCurrentProgress <= minDetectValue &&
-                    mPreviousProgress > mCurrentProgress) {
-                isMax = true;
-                progress = mMax;
-                mPoints = mMax;
-//				System.out.println("Reach Max " + progress);
+            if (mPreviousProgress >= maxDetectValue && mCurrentProgress <= minDetectValue && mPreviousProgress > mCurrentProgress) {
+                isMax = true
+                progress = mMax
+                mPoints = mMax
+                //				System.out.println("Reach Max " + progress);
                 if (mOnSeekBarAttrChangeListener != null) {
-                    mOnSeekBarAttrChangeListener
-                            .onPointsChanged(this, progress, fromUser);
-                    return;
+                    mOnSeekBarAttrChangeListener!!
+                        .onPointsChanged(this, progress, fromUser)
+                    return
                 }
-            } else if ((mCurrentProgress >= maxDetectValue
-                    && mPreviousProgress <= minDetectValue
-                    && mCurrentProgress > mPreviousProgress) || mCurrentProgress <= mMin) {
-                isMin = true;
-                progress = mMin;
-                mPoints = mMin;
-//				Log.d("Reach", "Reach Min " + progress);
+            } else if (mCurrentProgress >= maxDetectValue && mPreviousProgress <= minDetectValue && mCurrentProgress > mPreviousProgress || mCurrentProgress <= mMin) {
+                isMin = true
+                progress = mMin
+                mPoints = mMin
+                //				Log.d("Reach", "Reach Min " + progress);
                 if (mOnSeekBarAttrChangeListener != null) {
-                    mOnSeekBarAttrChangeListener
-                            .onPointsChanged(this, progress, fromUser);
-                    return;
+                    mOnSeekBarAttrChangeListener!!
+                        .onPointsChanged(this, progress, fromUser)
+                    return
                 }
             }
-            invalidate();
+            invalidate()
         } else {
 
             // Detect whether decreasing from max or increasing from min, to unlock the update event.
             // Make sure to check in detect range only.
-            if (isMax & (mCurrentProgress < mPreviousProgress) && mCurrentProgress >= maxDetectValue) {
+            if (isMax and (mCurrentProgress < mPreviousProgress) && mCurrentProgress >= maxDetectValue) {
 //				System.out.println("Unlock max");
-                isMax = false;
+                isMax = false
             }
             if (isMin
-                    && (mPreviousProgress < mCurrentProgress)
-                    && mPreviousProgress <= minDetectValue && mCurrentProgress <= minDetectValue
-                    && mPoints >= mMin) {
+                && mPreviousProgress < mCurrentProgress
+                && mPreviousProgress <= minDetectValue && mCurrentProgress <= minDetectValue && mPoints >= mMin
+            ) {
 //				Log.d("Unlock", String.format("Unlock min %.0f, %.0f\n", mPreviousProgress, mCurrentProgress));
-                isMin = false;
+                isMin = false
             }
         }
-
         if (!isMax && !isMin) {
-            progress = (progress > mMax) ? mMax : progress;
-            progress = (progress < mMin) ? mMin : progress;
-
+            progress = if (progress > mMax) mMax else progress
+            progress = if (progress < mMin) mMin else progress
             if (mOnSeekBarAttrChangeListener != null) {
-                progress = progress - (progress % mStep);
-
-                mOnSeekBarAttrChangeListener
-                        .onPointsChanged(this, progress, fromUser);
+                progress = progress - progress % step
+                mOnSeekBarAttrChangeListener!!
+                    .onPointsChanged(this, progress, fromUser)
             }
-
-            mProgressSweep = (float) progress / valuePerDegree();
-//			if (mPreviousProgress != mCurrentProgress)
+            mProgressSweep = progress.toFloat() / valuePerDegree()
+            //			if (mPreviousProgress != mCurrentProgress)
 //				System.out.printf("-- %d, %d, %f\n", progress, mPoints, mProgressSweep);
-            updateIndicatorIconPosition();
-            invalidate();
+            updateIndicatorIconPosition()
+            invalidate()
         }
     }
 
-    public interface OnSeekBarAttrChangeListener {
+    interface OnSeekBarAttrChangeListener {
+
+        fun onPointsChanged(seekBar: SeekBar?, points: Int, fromUser: Boolean)
+        fun onStartTrackingTouch(seekBar: SeekBar?)
+        fun onStopTrackingTouch(SeekBar: SeekBar?)
+    }
+
+    var points: Int
+        get() = mPoints
+        set(points) {
+            var points = points
+            points = if (points > mMax) mMax else points
+            points = if (points < mMin) mMin else points
+            updateProgress(points, false)
+        }
+    var progressWidth: Int
+        get() = mProgressWidth
+        set(mProgressWidth) {
+            this.mProgressWidth = mProgressWidth
+            mProgressPaint!!.strokeWidth = mProgressWidth.toFloat()
+        }
+    var arcWidth: Int
+        get() = mArcWidth
+        set(mArcWidth) {
+            this.mArcWidth = mArcWidth
+            mArcPaint!!.strokeWidth = mArcWidth.toFloat()
+        }
+
+    override fun isEnabled(): Boolean {
+        return mEnabled
+    }
+
+    override fun setEnabled(enabled: Boolean) {
+        mEnabled = enabled
+    }
+
+    var progressColor: Int
+        get() = mProgressPaint!!.color
+        set(color) {
+            mProgressPaint!!.color = color
+            invalidate()
+        }
+    var arcColor: Int
+        get() = mArcPaint!!.color
+        set(color) {
+            mArcPaint!!.color = color
+            invalidate()
+        }
+
+    fun getMax(): Int {
+        return mMax
+    }
+
+    fun setMax(mMax: Int) {
+        require(mMax > mMin) { "Max should not be less than min." }
+        this.mMax = mMax
+    }
+
+    fun getMin(): Int {
+        return mMin
+    }
+
+    fun setMin(min: Int) {
+        require(mMax > mMin) { "Min should not be greater than max." }
+        mMin = min
+    }
+
+    fun setOnSeekBarAttrChangeListener(onSeekBarAttrChangeListener: OnSeekBarAttrChangeListener?) {
+        mOnSeekBarAttrChangeListener = onSeekBarAttrChangeListener
+    }
+
+    companion object {
+        var INVALID_VALUE = -1
+        const val MAX = 100
+        const val MIN = 0
 
         /**
-         * Notification that the point value has changed.
-         *
-         * @param seekBar  The SeekBar view whose value has changed
-         * @param points   The current point value.
-         * @param fromUser True if the point change was triggered by the user.
+         * Offset = -90 indicates that the progress starts from 12 o'clock.
          */
-        void onPointsChanged(SeekBar seekBar, int points, boolean fromUser);
-
-        void onStartTrackingTouch(SeekBar seekBar);
-
-        void onStopTrackingTouch(SeekBar SeekBar);
-    }
-
-    public void setPoints(int points) {
-        points = points > mMax ? mMax : points;
-        points = points < mMin ? mMin : points;
-        updateProgress(points, false);
-    }
-
-    public int getPoints() {
-        return mPoints;
-    }
-
-    public int getProgressWidth() {
-        return mProgressWidth;
-    }
-
-    public void setProgressWidth(int mProgressWidth) {
-        this.mProgressWidth = mProgressWidth;
-        mProgressPaint.setStrokeWidth(mProgressWidth);
-    }
-
-    public int getArcWidth() {
-        return mArcWidth;
-    }
-
-    public void setArcWidth(int mArcWidth) {
-        this.mArcWidth = mArcWidth;
-        mArcPaint.setStrokeWidth(mArcWidth);
-    }
-
-    public void setClockwise(boolean isClockwise) {
-        mClockwise = isClockwise;
-    }
-
-    public boolean isClockwise() {
-        return mClockwise;
-    }
-
-    public boolean isEnabled() {
-        return mEnabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.mEnabled = enabled;
-    }
-
-    public int getProgressColor() {
-        return mProgressPaint.getColor();
-    }
-
-    public void setProgressColor(int color) {
-        mProgressPaint.setColor(color);
-        invalidate();
-    }
-
-    public int getArcColor() {
-        return mArcPaint.getColor();
-    }
-
-    public void setArcColor(int color) {
-        mArcPaint.setColor(color);
-        invalidate();
-    }
-
-    public int getMax() {
-        return mMax;
-    }
-
-    public void setMax(int mMax) {
-        if (mMax <= mMin)
-            throw new IllegalArgumentException("Max should not be less than min.");
-        this.mMax = mMax;
-    }
-
-    public int getMin() {
-        return mMin;
-    }
-
-    public void setMin(int min) {
-        if (mMax <= mMin)
-            throw new IllegalArgumentException("Min should not be greater than max.");
-        mMin = min;
-    }
-
-    public int getStep() {
-        return mStep;
-    }
-
-    public void setStep(int step) {
-        mStep = step;
-    }
-
-
-    public void setOnSeekBarAttrChangeListener(OnSeekBarAttrChangeListener onSeekBarAttrChangeListener) {
-        mOnSeekBarAttrChangeListener = onSeekBarAttrChangeListener;
+        private const val ANGLE_OFFSET = -90
     }
 }
-

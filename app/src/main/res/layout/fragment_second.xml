@@ -40,6 +40,7 @@
             android:layout_height="wrap_content"
             android:paddingStart="20dp"
             android:paddingTop="20dp"
+            android:paddingEnd="0dp"
             android:paddingBottom="20dp">
 
             <LinearLayout
@@ -65,6 +66,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
+                    android:paddingEnd="0dp"
                     android:paddingStart="12dp">
 
                     <technology.nine.cred.utills.customfonts.TextView.KumbhSansBoldTextView
@@ -72,7 +74,7 @@
                         android:layout_height="wrap_content"
                         android:letterSpacing="0.03"
                         android:lineSpacingExtra="5sp"
-                        android:text="HDFC Bank"
+                        android:text="@string/hdfc_bank"
                         android:textColor="@color/white"
                         android:textSize="15sp"
                         android:textStyle="bold" />
@@ -83,7 +85,7 @@
                         android:letterSpacing="0.03"
                         android:lineSpacingExtra="5sp"
                         android:paddingTop="5dp"
-                        android:text="50100117009192"
+                        android:text="@string/_50100117009192"
                         android:textColor="#616161"
                         android:textSize="15sp"
                         android:textStyle="bold" />
@@ -117,7 +119,7 @@
             android:paddingTop="10dp"
             android:paddingEnd="20dp"
             android:paddingBottom="10dp"
-            android:text="Change account"
+            android:text="@string/change_account"
             android:textColor="@color/white" />
 
 

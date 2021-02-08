@@ -13,4 +13,10 @@
     <string name="tap_for_click_kyc">Tap for 1-click KYC</string>
     <string name="select_your_bank_account">Select your bank account</string>
     <string name="emi">EMI</string>
+    <string name="duration">duration</string>
+    <string name="_12_months">12 months</string>
+    <string name="create_your_own_plan">Create your own plan</string>
+    <string name="hdfc_bank">HDFC Bank</string>
+    <string name="_50100117009192">50100117009192</string>
+    <string name="change_account">Change account</string>
 </resources>
