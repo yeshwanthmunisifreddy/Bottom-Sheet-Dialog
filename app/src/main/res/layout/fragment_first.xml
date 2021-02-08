@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/background_top_rounded"
+    android:backgroundTint="#141821"
+    android:elevation="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:id="@+id/collapsed_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="20dp"
+            android:paddingEnd="0dp"
+            android:paddingBottom="20dp"
+            android:visibility="gone">
+
+
+            <LinearLayout
+                android:id="@+id/emi_amount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <technology.nine.cred.utills.customfonts.TextView.KumbhSansRegularTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    android:letterSpacing="0.03"
+                    android:lineSpacingExtra="5sp"
+                    android:text="@string/emi"
+                    android:textColor="#282A2B"
+                    android:textSize="15sp" />
+
+                <technology.nine.cred.utills.customfonts.TextView.KumbhSansBoldTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    android:letterSpacing="0.03"
+                    android:lineSpacingExtra="5sp"
+                    android:paddingTop="5dp"
+                    android:text="\u20b9 4,247 /mo"
+                    android:textColor="#282A2B"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@+id/emi_amount"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <technology.nine.cred.utills.customfonts.TextView.KumbhSansRegularTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    android:letterSpacing="0.03"
+                    android:lineSpacingExtra="5sp"
+                    android:text="duration"
+                    android:textColor="#282A2B"
+                    android:textSize="15sp" />
+
+                <technology.nine.cred.utills.customfonts.TextView.KumbhSansBoldTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    android:letterSpacing="0.03"
+                    android:lineSpacingExtra="5sp"
+                    android:paddingTop="5dp"
+                    android:text="12 months"
+                    android:textColor="#282A2B"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="20dp"
+                android:padding="3dp"
+                android:src="@drawable/ic_down_arrow"
+                app:tint="@color/white" />
+
+        </RelativeLayout>
+
+
+        <LinearLayout
+            android:id="@+id/expanded_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:paddingTop="20dp">
+
+            <technology.nine.cred.utills.customfonts.TextView.KumbhSansBoldTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:letterSpacing="0.03"
+                android:lineSpacingExtra="5sp"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:text="@string/how_do_you_wish_to_repay"
+                android:textColor="@color/blue_4"
+                android:textSize="15sp" />
+
+            <technology.nine.cred.utills.customfonts.TextView.KumbhSansRegularTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:letterSpacing="0.03"
+                android:lineSpacingExtra="5sp"
+                android:paddingStart="20dp"
+                android:paddingTop="10dp"
+                android:paddingEnd="20dp"
+                android:text="@string/choose_one_of_your_recommended_plans_or_make_your_own"
+                android:textColor="#616161" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="20dp"
+                android:paddingEnd="0dp" />
+
+            <technology.nine.cred.utills.customfonts.TextView.KumbhSansBoldTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/background_rounded_border"
+                android:paddingStart="20dp"
+                android:paddingTop="10dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="10dp"
+                android:text="Create your own plan"
+                android:textColor="@color/white" />
+
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+
+</RelativeLayout>

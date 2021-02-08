@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">Cred</string>
+    <string name="nikunj_how_much_do_you_need">nikunj, how much do you need?</string>
+    <string name="move_the_dial_and_set_any_amount_you_need_upto_u20b9_487_891">move the dial and set any amount you need upto ₹ 487,891</string>
+    <string name="close_button">close_button</string>
+    <string name="faq_button">faq button</string>
+    <string name="stash_in_instant_money_will_be_credited_within_seconds">stash in instant. money will be credited within seconds</string>
+    <string name="credit_amount">credit amount</string>
+    <string name="_1_04_monthly">\@1.04% monthly</string>
+    <string name="proceed_to_emi_selection">Proceed to EMI selection</string>
+    <string name="how_do_you_wish_to_repay">how do you wish to repay?</string>
+    <string name="choose_one_of_your_recommended_plans_or_make_your_own">choose one of your recommended plans or make your own</string>
+    <string name="tap_for_click_kyc">Tap for 1-click KYC</string>
+    <string name="select_your_bank_account">Select your bank account</string>
+    <string name="emi">EMI</string>
+</resources>
