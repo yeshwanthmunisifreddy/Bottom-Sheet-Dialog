@@ -178,7 +178,7 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
         SavedState ss = (SavedState) state;
         super.onRestoreInstanceState(parent, child, ss.getSuperState());
         // Intermediate states are restored as collapsed state
-
+        restoreOptionalState(ss);
 
         if (ss.state == STATE_DRAGGING || ss.state == STATE_SETTLING) {
             mState = STATE_COLLAPSED;
@@ -188,6 +188,13 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
 
         mLastStableState = mState;
     }
+
+    private void restoreOptionalState(@NonNull SavedState ss) {
+        this.mPeekHeight = ss.peekHeight;
+        this.mHideable = ss.hideable;
+        this.mPeekHeight = ss.peekHeight;
+    }
+
 
     @Override
     public boolean onLayoutChild(CoordinatorLayout parent, V child, int layoutDirection) {
