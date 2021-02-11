@@ -64,8 +64,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:paddingStart="20dp"
-                    android:paddingEnd="0dp"
                     android:paddingTop="0dp"
+                    android:paddingEnd="0dp"
                     android:paddingBottom="20dp"
                     android:visibility="gone">
 
@@ -245,7 +245,7 @@
         android:backgroundTint="@color/black_200"
         app:behavior_hideable="true"
         app:behavior_peekHeight="0dp"
-        app:layout_behavior="technology.nine.cred.utills.CustomBottomSheetBehavior">
+        app:layout_behavior="technology.nine.cred.utills.BottomSheetBehavior">
 
         <FrameLayout
             android:id="@+id/first_fragment_container"
@@ -262,7 +262,7 @@
         android:visibility="gone"
         app:behavior_hideable="false"
         app:behavior_peekHeight="0dp"
-        app:layout_behavior="technology.nine.cred.utills.CustomBottomSheetBehavior">
+        app:layout_behavior="technology.nine.cred.utills.BottomSheetBehavior">
 
         <FrameLayout
             android:id="@+id/second_fragment_container"

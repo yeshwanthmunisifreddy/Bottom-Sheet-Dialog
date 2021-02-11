@@ -28,9 +28,6 @@ class BankCardAdapter(var context: Context, private val bankList: MutableList<Ba
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val bankDetails = bankList[position]
 
-        holder.tx_amount.text = bankDetails.bankName
-        holder.tx_months.text = bankDetails.bankAccount
-
 
     }
 
@@ -39,12 +36,8 @@ class BankCardAdapter(var context: Context, private val bankList: MutableList<Ba
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var checked: ImageView = itemView.findViewById(R.id.checked)
-        var unchecked: ImageView = itemView.findViewById(R.id.unchecked)
-        var tx_amount: TextView = itemView.findViewById(R.id.tx_amount)
-        var tx_months: TextView = itemView.findViewById(R.id.tx_months)
-        var contain_layout: LinearLayout = itemView.findViewById(R.id.contain_layout)
-        var main_layout: RelativeLayout = itemView.findViewById(R.id.main_layout)
+
+
     }
 
 

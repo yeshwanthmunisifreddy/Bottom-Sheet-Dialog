@@ -13,13 +13,12 @@ import technology.nine.cred.`interface`.StateChangeListener
 import technology.nine.cred.fragments.FirstFragment
 import technology.nine.cred.fragments.SecondFragment
 import technology.nine.cred.utills.BottomSheetBehavior
-import technology.nine.cred.utills.CustomBottomSheetBehavior
 
 
 class MainActivity : AppCompatActivity(), StateChangeListener {
 
-    private var firstBottomSheetBehavior: CustomBottomSheetBehavior<*>? = null
-    private var secondBottomSheetBehaviour: CustomBottomSheetBehavior<*>? = null
+    private var firstBottomSheetBehavior: BottomSheetBehavior<*>? = null
+    private var secondBottomSheetBehaviour: BottomSheetBehavior<*>? = null
     var height: Int = 0
     var width: Int = 0
 
@@ -47,9 +46,13 @@ class MainActivity : AppCompatActivity(), StateChangeListener {
         val firstBottomSheet: FrameLayout = findViewById(R.id.first_bottom_sheet_holder)
         val secondBottomSheet: FrameLayout = findViewById(R.id.second_bottom_sheet_holder)
         firstBottomSheetBehavior =
-            BottomSheetBehavior.from(firstBottomSheet) as CustomBottomSheetBehavior<*>
+            BottomSheetBehavior.from(firstBottomSheet) as BottomSheetBehavior<*>
         secondBottomSheetBehaviour =
-            BottomSheetBehavior.from(secondBottomSheet) as CustomBottomSheetBehavior<*>
+            BottomSheetBehavior.from(secondBottomSheet) as BottomSheetBehavior<*>
+
+        firstBottomSheetBehavior?.isDraggable = false
+        secondBottomSheetBehaviour?.isDraggable = false
+
 
         firstBottomSheet.layoutParams.height = height - 550
         secondBottomSheet.layoutParams.height = height - 800
