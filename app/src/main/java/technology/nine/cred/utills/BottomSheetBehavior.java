@@ -36,7 +36,6 @@ import technology.nine.cred.R;
 
 import static java.lang.Math.max;
 
-
 public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behavior<V> {
 
     public abstract static class BottomSheetCallback {
@@ -910,7 +909,7 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
         return (BottomSheetBehavior<V>) behavior;
     }
 
-    private void settleToStatePendingLayout(@technology.nine.cred.BottomSheetBehavior.State int state) {
+    private void settleToStatePendingLayout(@State int state) {
         final V child = mViewRef.get();
         if (child == null) {
             return;
