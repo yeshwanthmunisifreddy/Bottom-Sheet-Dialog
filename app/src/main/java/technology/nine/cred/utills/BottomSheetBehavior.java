@@ -42,8 +42,8 @@ import technology.nine.cred.R;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
-import static technology.nine.cred.ViewUtils.doOnApplyWindowInsets;
-import static technology.nine.cred.ViewUtils.isLayoutRtl;
+import static technology.nine.cred.utills.ViewUtils.doOnApplyWindowInsets;
+import static technology.nine.cred.utills.ViewUtils.isLayoutRtl;
 
 
 public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behavior<V> {
@@ -199,9 +199,8 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
     }
 
 
-
     @Override
-    public Parcelable onSaveInstanceState(CoordinatorLayout parent, V child) {
+    public Parcelable onSaveInstanceState(@NonNull CoordinatorLayout parent, @NonNull V child) {
         return new SavedState(super.onSaveInstanceState(parent, child), this);
     }
 
@@ -224,7 +223,6 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
     private void restoreOptionalState(@NonNull SavedState ss) {
         this.mPeekHeight = ss.peekHeight;
         this.mHideable = ss.hideable;
-        this.mPeekHeight = ss.peekHeight;
     }
 
 
@@ -1128,11 +1126,6 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
                         }
                     }
                 });
-    }
-
-    public void disableShapeAnimations() {
-        // Sets the shape value animator to null, prevents animations from occuring during testing.
-        interpolatorAnimator = null;
     }
 
     public void setUpdateImportantForAccessibilityOnSiblings(
