@@ -54,6 +54,7 @@ class MainActivity : AppCompatActivity(), StateChangeListener {
         secondBottomSheetBehaviour?.isDraggable = false
 
 
+
         firstBottomSheet.layoutParams.height = height - 550
         secondBottomSheet.layoutParams.height = height - 800
         bt_proceed.setOnClickListener {
@@ -137,6 +138,7 @@ class MainActivity : AppCompatActivity(), StateChangeListener {
             && secondBottomSheetBehaviour?.state == BottomSheetBehavior.STATE_COLLAPSED
         ) {
             firstBottomSheetBehavior!!.state = BottomSheetBehavior.STATE_COLLAPSED
+
         } else {
             super.onBackPressed()
         }

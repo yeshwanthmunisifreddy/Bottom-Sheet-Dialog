@@ -14,13 +14,17 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+import android.view.accessibility.AccessibilityEvent;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.view.NestedScrollingChild;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
+import androidx.core.view.accessibility.AccessibilityViewCommand;
 import androidx.customview.view.AbsSavedState;
 import androidx.customview.widget.ViewDragHelper;
 
@@ -30,13 +34,20 @@ import com.google.android.material.shape.ShapeAppearanceModel;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.ref.WeakReference;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 
 import technology.nine.cred.R;
 
 import static java.lang.Math.max;
+import static java.lang.Math.min;
+import static technology.nine.cred.ViewUtils.doOnApplyWindowInsets;
+import static technology.nine.cred.ViewUtils.isLayoutRtl;
+
 
 public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behavior<V> {
+
 
     public abstract static class BottomSheetCallback {
 
@@ -90,6 +101,9 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
     private boolean mNestedScrolled;
 
     private int mParentHeight;
+    private int mParentWidth;
+    private int childHeight;
+
 
     private WeakReference<V> mViewRef;
 
@@ -119,16 +133,35 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
     @Nullable
     private ValueAnimator interpolatorAnimator;
     float elevation = -1;
+    private int peekHeightMin;
+
+    @Nullable
+    private Map<View, Integer> importantForAccessibilityMap;
+    private boolean updateImportantForAccessibilityOnSiblings = false;
+    private int peekHeightGestureInsetBuffer;
+
+    private int gestureInsetBottom;
+    private boolean gestureInsetBottomIgnored;
+    private boolean paddingBottomSystemWindowInsets = true;
+    private boolean paddingLeftSystemWindowInsets = true;
+    private boolean paddingRightSystemWindowInsets = true;
+
+    private int insetBottom;
+    private int insetTop;
 
 
     public BottomSheetBehavior() {
     }
 
-    public BottomSheetBehavior(Context context, AttributeSet attrs) {
+    public BottomSheetBehavior(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        TypedArray a = context.obtainStyledAttributes(attrs,
-                com.google.android.material.R.styleable.BottomSheetBehavior_Layout);
 
+        peekHeightGestureInsetBuffer =
+                context.getResources().getDimensionPixelSize(R.dimen.mtrl_min_touch_target_size);
+
+
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.BottomSheetBehavior_Layout);
+        TypedArray b = context.obtainStyledAttributes(attrs, R.styleable.BottomSheetBehavior);
         this.shapeThemingEnabled = a.hasValue(R.styleable.BottomSheetBehavior_Layout_shapeAppearance);
         createMaterialShapeDrawable(context, attrs, false);
 
@@ -138,7 +171,6 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
             this.elevation = a.getDimension(R.styleable.BottomSheetBehavior_Layout_android_elevation, -1);
         }
 
-
         TypedValue value = a.peekValue(R.styleable.BottomSheetBehavior_Layout_behavior_peekHeight);
         if (value != null && value.data == PEEK_HEIGHT_AUTO) {
             setPeekHeight(value.data);
@@ -147,24 +179,25 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
                     a.getDimensionPixelSize(
                             R.styleable.BottomSheetBehavior_Layout_behavior_peekHeight, PEEK_HEIGHT_AUTO));
         }
-        setHideable(a.getBoolean(com.google.android.material.R.styleable.BottomSheetBehavior_Layout_behavior_hideable, false));
+        setHideable(a.getBoolean(R.styleable.BottomSheetBehavior_Layout_behavior_hideable, false));
+        setDraggable(a.getBoolean(R.styleable.BottomSheetBehavior_Layout_behavior_draggable, true));
 
-        setDraggable(a.getBoolean(R.styleable.BottomSheetBehavior_Layout_behavior_draggable, false));
+        setGestureInsetBottomIgnored(
+                a.getBoolean(R.styleable.BottomSheetBehavior_Layout_gestureInsetBottomIgnored, false));
 
+        // Reading out if we are handling padding, so we can apply it to the content.
+        paddingBottomSystemWindowInsets =
+                b.getBoolean(R.styleable.BottomSheetBehavior_paddingBottomSystemWindowInsets, false);
+        paddingLeftSystemWindowInsets =
+                b.getBoolean(R.styleable.BottomSheetBehavior_paddingLeftSystemWindowInsets, false);
+        paddingRightSystemWindowInsets =
+                b.getBoolean(R.styleable.BottomSheetBehavior_paddingRightSystemWindowInsets, false);
         a.recycle();
-
-        mAnchorPoint = DEFAULT_ANCHOR_POINT;
-        mCollapsible = true;
-        a = context.obtainStyledAttributes(attrs, R.styleable.BottomSheetBehavior);
-        if (attrs != null) {
-            mAnchorPoint = (int) a.getDimension(R.styleable.BottomSheetBehavior_anchorPoint, 0);
-            mState = a.getInt(R.styleable.BottomSheetBehavior_defaultStates, STATE_COLLAPSED);
-        }
-        a.recycle();
-
+        b.recycle();
         ViewConfiguration configuration = ViewConfiguration.get(context);
-        mMinimumVelocity = configuration.getScaledMinimumFlingVelocity();
+        mMinimumVelocity = configuration.getScaledMaximumFlingVelocity();
     }
+
 
 
     @Override
@@ -203,10 +236,18 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
                     !child.getFitsSystemWindows()) {
                 child.setFitsSystemWindows(true);
             }
+
             parent.onLayoutChild(child, layoutDirection);
         }
 
+
         if (mViewRef == null) {
+            peekHeightMin =
+                    parent.getResources().getDimensionPixelSize(R.dimen.design_bottom_sheet_peek_height_min);
+
+            setWindowInsetsListener(child);
+            mViewRef = new WeakReference<>(child);
+
             if (shapeThemingEnabled && materialShapeDrawable != null) {
                 ViewCompat.setBackground(child, materialShapeDrawable);
             }
@@ -219,11 +260,22 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
                 isShapeExpanded = mState == STATE_EXPANDED;
                 materialShapeDrawable.setInterpolation(isShapeExpanded ? 0f : 1f);
             }
-
+            updateAccessibilityActions();
+            if (ViewCompat.getImportantForAccessibility(child)
+                    == ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_AUTO) {
+                ViewCompat.setImportantForAccessibility(child, ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_YES);
+            }
         }
 
         // Offset the bottom sheet
         mParentHeight = parent.getHeight();
+        mParentWidth = parent.getWidth();
+        childHeight = child.getHeight();
+
+        if (mParentHeight - childHeight < insetTop) {
+            childHeight = mParentHeight;
+        }
+
         mMinOffset = Math.max(0, mParentHeight - child.getHeight());
         mMaxOffset = Math.max(mParentHeight - mPeekHeight, mMinOffset);
 
@@ -237,7 +289,6 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
         }
 
 
-        mViewRef = new WeakReference<>(child);
         mNestedScrollingChildRef = new WeakReference<>(findScrollingChild(child));
         return true;
     }
@@ -567,6 +618,14 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
         return mCollapsible;
     }
 
+    public void setGestureInsetBottomIgnored(boolean gestureInsetBottomIgnored) {
+        this.gestureInsetBottomIgnored = gestureInsetBottomIgnored;
+    }
+
+    public boolean isGestureInsetBottomIgnored() {
+        return gestureInsetBottomIgnored;
+    }
+
 
     public final void setPeekHeight(int peekHeight, boolean animate) {
         boolean layout = false;
@@ -589,12 +648,12 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
 
     private void updatePeekHeight(boolean animate) {
         if (mViewRef != null) {
-            // calculateCollapsedOffset();
+            calculateCollapsedOffset();
             if (mState == STATE_COLLAPSED) {
                 V view = mViewRef.get();
                 if (view != null) {
                     if (animate) {
-                        //settleToStatePendingLayout(state);
+                        settleToStatePendingLayout(mState);
                     } else {
                         view.requestLayout();
                     }
@@ -657,9 +716,21 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
         if (mState == state) {
             return;
         }
+        if (mViewRef == null) {
+            return;
+        }
+
         mState = state;
         View bottomSheet = mViewRef.get();
+
+        if (state == STATE_EXPANDED) {
+            updateImportantForAccessibility(true);
+        } else if (state == STATE_COLLAPSED) {
+            updateImportantForAccessibility(false);
+        }
+
         if (bottomSheet != null && mCallback != null) {
+
 //            mCallback.onStateChanged(bottomSheet, state);
             notifyStateChangedToListeners(bottomSheet, state);
         }
@@ -789,16 +860,16 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
         }
 
         @Override
-        public int clampViewPositionHorizontal(View child, int left, int dx) {
+        public int clampViewPositionHorizontal(@NonNull View child, int left, int dx) {
             return child.getLeft();
         }
 
         @Override
         public int getViewVerticalDragRange(View child) {
             if (mHideable) {
-                return mParentHeight - mMinOffset;
+                return mParentHeight;
             } else {
-                return mMaxOffset - mMinOffset;
+                return mMaxOffset;
             }
         }
     };
@@ -812,6 +883,8 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
                 notifyOnSlideToListeners(bottomSheet, (float) (mMaxOffset - top) / ((mMaxOffset - mMinOffset)));
             }
         }
+
+
     }
 
     private class SettleRunnable implements Runnable {
@@ -908,6 +981,27 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
         }
         return (BottomSheetBehavior<V>) behavior;
     }
+
+    private int calculatePeekHeight() {
+        if (peekHeightAuto) {
+            int desiredHeight = max(peekHeightMin, mParentHeight - mParentWidth * 9 / 16);
+            return min(desiredHeight, childHeight) + insetBottom;
+        }
+        // Only make sure the peek height is above the gesture insets if we're not applying system
+        // insets.
+        if (!gestureInsetBottomIgnored && !paddingBottomSystemWindowInsets && gestureInsetBottom > 0) {
+            return max(mParentHeight, gestureInsetBottom + peekHeightGestureInsetBuffer);
+        }
+        return mPeekHeight + insetBottom;
+    }
+
+    private void calculateCollapsedOffset() {
+        int peek = calculatePeekHeight();
+
+        mMaxOffset = mParentHeight - peek;
+
+    }
+
 
     private void settleToStatePendingLayout(@State int state) {
         final V child = mViewRef.get();
@@ -1039,6 +1133,170 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
     public void disableShapeAnimations() {
         // Sets the shape value animator to null, prevents animations from occuring during testing.
         interpolatorAnimator = null;
+    }
+
+    public void setUpdateImportantForAccessibilityOnSiblings(
+            boolean updateImportantForAccessibilityOnSiblings) {
+        this.updateImportantForAccessibilityOnSiblings = updateImportantForAccessibilityOnSiblings;
+    }
+
+    private void updateImportantForAccessibility(boolean expanded) {
+        if (mViewRef == null) {
+            return;
+        }
+
+        ViewParent viewParent = mViewRef.get().getParent();
+        if (!(viewParent instanceof CoordinatorLayout)) {
+            return;
+        }
+
+        CoordinatorLayout parent = (CoordinatorLayout) viewParent;
+        final int childCount = parent.getChildCount();
+        if (expanded) {
+            if (importantForAccessibilityMap == null) {
+                importantForAccessibilityMap = new HashMap<>(childCount);
+            } else {
+                // The important for accessibility values of the child views have been saved already.
+                return;
+            }
+        }
+
+        for (int i = 0; i < childCount; i++) {
+            final View child = parent.getChildAt(i);
+            if (child == mViewRef.get()) {
+                continue;
+            }
+
+            if (expanded) {
+                // Saves the important for accessibility value of the child view.
+                importantForAccessibilityMap.put(child, child.getImportantForAccessibility());
+                if (updateImportantForAccessibilityOnSiblings) {
+                    ViewCompat.setImportantForAccessibility(
+                            child, ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
+                }
+            } else {
+                if (updateImportantForAccessibilityOnSiblings
+                        && importantForAccessibilityMap != null
+                        && importantForAccessibilityMap.containsKey(child)) {
+                    // Restores the original important for accessibility value of the child view.
+                    ViewCompat.setImportantForAccessibility(child, importantForAccessibilityMap.get(child));
+                }
+            }
+        }
+
+        if (!expanded) {
+            importantForAccessibilityMap = null;
+        } else if (updateImportantForAccessibilityOnSiblings) {
+            // If the siblings of the bottom sheet have been set to not important for a11y, move the focus
+            // to the bottom sheet when expanded.
+            mViewRef.get().sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED);
+        }
+    }
+
+    private void updateAccessibilityActions() {
+        if (mViewRef == null) {
+            return;
+        }
+        V child = mViewRef.get();
+        if (child == null) {
+            return;
+        }
+        ViewCompat.removeAccessibilityAction(child, AccessibilityNodeInfoCompat.ACTION_COLLAPSE);
+        ViewCompat.removeAccessibilityAction(child, AccessibilityNodeInfoCompat.ACTION_EXPAND);
+        ViewCompat.removeAccessibilityAction(child, AccessibilityNodeInfoCompat.ACTION_DISMISS);
+
+
+        switch (mState) {
+            case STATE_EXPANDED: {
+                int nextState = STATE_EXPANDED;
+                replaceAccessibilityActionForState(
+                        child, AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_COLLAPSE, nextState);
+                break;
+            }
+            case STATE_COLLAPSED: {
+                int nextState = STATE_EXPANDED;
+                replaceAccessibilityActionForState(
+                        child, AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_EXPAND, nextState);
+                break;
+            }
+            default: // fall out
+        }
+    }
+
+
+    private void replaceAccessibilityActionForState(
+            V child, AccessibilityNodeInfoCompat.AccessibilityActionCompat action, int state) {
+        ViewCompat.replaceAccessibilityAction(
+                child, action, null, createAccessibilityViewCommandForState(state));
+    }
+
+    private int addAccessibilityActionForState(V child, @StringRes int stringResId, int state) {
+        return ViewCompat.addAccessibilityAction(
+                child,
+                child.getResources().getString(stringResId),
+                createAccessibilityViewCommandForState(state));
+    }
+
+
+    private AccessibilityViewCommand createAccessibilityViewCommandForState(final int state) {
+        return new AccessibilityViewCommand() {
+            @Override
+            public boolean perform(@NonNull View view, @Nullable CommandArguments arguments) {
+                setState(state);
+                return true;
+            }
+        };
+    }
+
+    private void setWindowInsetsListener(@NonNull View child) {
+        // Ensure the peek height is at least as large as the bottom gesture inset size so that
+        // the sheet can always be dragged, but only when the inset is required by the system.
+        final boolean shouldHandleGestureInsets =
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !isGestureInsetBottomIgnored() && !peekHeightAuto;
+
+        // If were not handling insets at all, don't apply the listener.
+        if (!paddingBottomSystemWindowInsets && !paddingLeftSystemWindowInsets && !paddingRightSystemWindowInsets && !shouldHandleGestureInsets) {
+            return;
+        }
+        doOnApplyWindowInsets(
+                child,
+                (view, insets, initialPadding) -> {
+                    insetTop = insets.getSystemWindowInsetTop();
+
+                    boolean isRtl = isLayoutRtl(view);
+
+                    int bottomPadding = view.getPaddingBottom();
+                    int leftPadding = view.getPaddingLeft();
+                    int rightPadding = view.getPaddingRight();
+
+                    if (paddingBottomSystemWindowInsets) {
+                        insetBottom = insets.getSystemWindowInsetBottom();
+                        bottomPadding = initialPadding.bottom + insetBottom;
+                    }
+
+                    if (paddingLeftSystemWindowInsets) {
+                        leftPadding = isRtl ? initialPadding.end : initialPadding.start;
+                        leftPadding += insets.getSystemWindowInsetLeft();
+                    }
+
+                    if (paddingRightSystemWindowInsets) {
+                        rightPadding = isRtl ? initialPadding.start : initialPadding.end;
+                        rightPadding += insets.getSystemWindowInsetRight();
+                    }
+
+                    view.setPadding(leftPadding, view.getPaddingTop(), rightPadding, bottomPadding);
+
+                    if (shouldHandleGestureInsets) {
+                        gestureInsetBottom = insets.getMandatorySystemGestureInsets().bottom;
+                    }
+
+                    // Don't update the peek height to be above the navigation bar or gestures if these
+                    // flags are off. It means the client is already handling it.
+                    if (paddingBottomSystemWindowInsets || shouldHandleGestureInsets) {
+                        updatePeekHeight(/* animate= */ false);
+                    }
+                    return insets;
+                });
     }
 
 
