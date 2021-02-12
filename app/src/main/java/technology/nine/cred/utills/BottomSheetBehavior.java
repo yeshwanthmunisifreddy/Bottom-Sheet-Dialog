@@ -186,12 +186,11 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
                 a.getBoolean(R.styleable.BottomSheetBehavior_Layout_gestureInsetBottomIgnored, false));
 
         // Reading out if we are handling padding, so we can apply it to the content.
-        paddingBottomSystemWindowInsets =
-                b.getBoolean(R.styleable.BottomSheetBehavior_paddingBottomSystemWindowInsets, false);
-        paddingLeftSystemWindowInsets =
-                b.getBoolean(R.styleable.BottomSheetBehavior_paddingLeftSystemWindowInsets, false);
-        paddingRightSystemWindowInsets =
-                b.getBoolean(R.styleable.BottomSheetBehavior_paddingRightSystemWindowInsets, false);
+        setPaddingBottomSystemWindowInsets(b.getBoolean(R.styleable.BottomSheetBehavior_paddingBottomSystemWindowInsets, false));
+
+        setPaddingLeftSystemWindowInsets(b.getBoolean(R.styleable.BottomSheetBehavior_paddingLeftSystemWindowInsets, false));
+        setPaddingRightSystemWindowInsets(
+                b.getBoolean(R.styleable.BottomSheetBehavior_paddingRightSystemWindowInsets, false));
         a.recycle();
         b.recycle();
         ViewConfiguration configuration = ViewConfiguration.get(context);
@@ -607,6 +606,28 @@ public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behav
         return mHideable;
     }
 
+
+    public void setPaddingBottomSystemWindowInsets(boolean paddingBottomSystemWindowInsets) {
+        this.paddingBottomSystemWindowInsets = paddingBottomSystemWindowInsets;
+    }
+
+    public boolean getPaddingBottomSystemWindowInsets() {
+        return this.paddingBottomSystemWindowInsets;
+    }
+
+    public void setPaddingLeftSystemWindowInsets(boolean paddingLeftSystemWindowInsets) {
+        this.paddingLeftSystemWindowInsets = paddingLeftSystemWindowInsets;
+    }
+    public boolean getPaddingLeftSystemWindowInsets(){
+        return  this.paddingLeftSystemWindowInsets;
+    }
+
+    public void setPaddingRightSystemWindowInsets(boolean paddingRightSystemWindowInsets) {
+        this.paddingRightSystemWindowInsets = paddingRightSystemWindowInsets;
+    }
+    public  boolean getPaddingRightSystemWindowInsets(){
+        return  this.paddingRightSystemWindowInsets;
+    }
 
     public void setCollapsible(boolean collapsible) {
         mCollapsible = collapsible;
